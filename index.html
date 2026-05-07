@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>martin guerrero milan</title>
+    <style>
+        /* Base Reset */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: #000000;
+            min-height: 100vh; 
+            overflow-x: hidden;
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            color: #666666;
+        }
+
+        /* Sticky Navigation Bar */
+        nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background: rgba(0, 0, 0, 0);
+            padding: 20px;
+            z-index: 1000;
+            display: flex;
+            justify-content: space-between;
+            /* Aligned to top to match bio contact div */
+            align-items: flex-start;
+            mix-blend-mode: difference;
+            color: white;
+        }
+
+        .nav-logo {
+            font-size: 1rem;
+            font-weight: normal;
+            text-transform: lowercase;
+            line-height: 1;
+        }
+
+        /* Bio & Contact Div */
+        .bio-contact {
+            max-width: 1000px;
+            font-size: 1rem;
+            line-height: 1.2;
+            text-align: right;
+        }
+
+        .bio-contact p {
+            margin-bottom: 10px;
+        }
+
+        .bio-contact a {
+            color: #ffffff;
+            text-decoration: none;
+            font-weight: normal;
+        }
+
+        /* Spawned Images Styling */
+        .trail-image {
+            position: absolute;
+            width: auto;
+            max-width: 400px; /* Limits size for better performance */
+            height: auto;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            z-index: 10;
+        }
+    </style>
+</head>
+<body>
+
+    <nav>
+        <div class="nav-logo">martin guerrero milan</div>
+        <div class="bio-contact">
+            <p>Designer with an editorial background, influenced by music, film, and the internet. I explore sensations and meanings through experimental techniques and narratives, with dedication to typographical layout, images and visuals.</p>
+            <p>Get in touch: <a href="mailto:martinguerreromilan@gmail.com">martinguerreromilan@gmail.com</a></p>
+        </div>
+    </nav>
+
+    <script>
+        // Updated array for GitHub/Local hosting
+        // Ensure your images are in a folder named 'images'
+        const images = [
+            'images/image1.webp',
+            'images/image2.webp',
+            'images/image3.webp',
+            'images/image4.webp',
+            'images/image5.webp'
+        ];
+
+        let currentImgIndex = 0;
+        let lastX = 0;
+        let lastY = 0;
+        let idleTimeout;
+        const distanceThreshold = 100; 
+
+        function spawnImage(x, y) {
+            const img = document.createElement('img');
+            img.src = images[currentImgIndex];
+            img.className = 'trail-image';
+            
+            img.style.left = `${x + window.scrollX}px`;
+            img.style.top = `${y + window.scrollY}px`;
+            
+            // Error handling if an image is missing
+            img.onerror = function() { this.style.display = 'none'; };
+            
+            document.body.appendChild(img);
+            currentImgIndex = (currentImgIndex + 1) % images.length;
+        }
+
+        document.addEventListener('mousemove', (e) => {
+            clearTimeout(idleTimeout);
+
+            if (lastX === 0 && lastY === 0) {
+                lastX = e.clientX;
+                lastY = e.clientY;
+            }
+
+            const deltaX = e.clientX - lastX;
+            const deltaY = e.clientY - lastY;
+            const distanceMoved = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+
+            if (distanceMoved > distanceThreshold) {
+                spawnImage(e.clientX, e.clientY);
+                lastX = e.clientX;
+                lastY = e.clientY;
+            }
+
+            idleTimeout = setTimeout(() => {
+                spawnImage(e.clientX, e.clientY);
+                lastX = e.clientX;
+                lastY = e.clientY;
+            }, 500);
+        });
+    </script>
+</body>
+</html>
