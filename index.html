@@ -85,14 +85,27 @@
     </nav>
 
     <script>
-        // 1. Configuration
-        const projects = ['maracuya', 'estudio herreros', 'renegade', 'xfl', 'kamchatka', 'ath', 'blood of eden', 'negro', 'bill hicks'];
-        const imagesPerProject = 30; // Change this to match your folder contents
+        // 1. Configuration: Map each folder to its specific image count
+        // Ensure folder names match your GitHub folders EXACTLY
+        const projectData = {
+            'maracuya': 12,
+            'estudio herreros': 25,
+            'renegade': 8,
+            'xfl': 30,
+            'kamchatka': 15,
+            'ath': 10,
+            'blood of eden': 22,
+            'negro': 5,
+            'bill hicks': 18
+        };
 
-        // 2. Generate the list of .png paths
-        const images = projects.flatMap(folder => 
-            Array.from({ length: imagesPerProject }, (_, i) => `images/${folder}/image${i + 1}.jpg`)
-        );
+        // 2. Generate the master list of .jpg paths based on specific counts
+        const images = [];
+        for (const [folder, count] of Object.entries(projectData)) {
+            for (let i = 1; i <= count; i++) {
+                images.push(`images/${folder}/image${i}.jpg`);
+            }
+        }
 
         let lastIndex = -1;
         let lastX = 0;
@@ -101,12 +114,14 @@
         const distanceThreshold = 100; 
 
         function spawnImage(x, y) {
+            if (images.length === 0) return;
+
             let randomIndex;
             
-            // Randomly pick a new image index (different from the last one)
+            // Randomly pick an image from the master list
             do {
                 randomIndex = Math.floor(Math.random() * images.length);
-            } while (randomIndex === lastIndex);
+            } while (randomIndex === lastIndex && images.length > 1);
             
             lastIndex = randomIndex;
             
@@ -117,8 +132,8 @@
             img.style.left = `${x + window.scrollX}px`;
             img.style.top = `${y + window.scrollY}px`;
             
-            // Hide if file is not found
-            img.onerror = function() { this.style.display = 'none'; };
+            // Error handling: if a specific file is missing, don't show a broken icon
+            img.onerror = function() { this.remove(); };
             
             document.body.appendChild(img);
         }
