@@ -31,7 +31,7 @@
             z-index: 1000;
             display: flex;
             justify-content: space-between;
-            /* Aligned to top to match bio contact div */
+            /* Aligned to top to sit flush with the bio text */
             align-items: flex-start;
             mix-blend-mode: difference;
             color: white;
@@ -53,7 +53,7 @@
         }
 
         .bio-contact p {
-            margin-bottom: 5px;
+            margin-bottom: 10px;
         }
 
         .bio-contact a {
@@ -66,11 +66,10 @@
         .trail-image {
             position: absolute;
             width: auto;
-            max-width: 1440px; /* Limits size for better performance */
+            max-width: 400px;
             height: auto;
             transform: translate(-50%, -50%);
             pointer-events: none;
-            box-shadow: 0 0px 0px rgba(0,0,0,0);
             z-index: 10;
         }
     </style>
@@ -80,62 +79,74 @@
     <nav>
         <div class="nav-logo">martin guerrero milan</div>
         <div class="bio-contact">
-            <p>Designer based in Buenos Aires with over twenty years of experience. Influenced by music, film, and the internet, I focus my work on exploring sensations and meanings through experimental techniques and narratives, working with tailored multidisciplinary teams across identity, campaign, film, and web projects.
-Currently working as an Principal, Visual Design at DEPT®.</p>
+            <p>Designer based in Buenos Aires working creatively with tailored multidisciplinary teams across identity, campaigns and web. Influenced by music, film, and the internet, focused on exploring sensations and meanings through experimental techniques and narratives.</p>
             <p>Get in touch: <a href="mailto:martinguerreromilan@gmail.com">martinguerreromilan@gmail.com</a></p>
         </div>
     </nav>
 
-  <script>
-    // 1. Generate the array for 100 images
-    const images = Array.from({ length: 100 }, (_, i) => `images/image${i + 1}.png`);
+    <script>
+        // 1. Configuration
+        const projects = ['maracuya', 'estudio herreros', 'renegade', 'xfl', 'kamchatka', 'ath', 'blood of eden', 'negro', 'bill hicks'];
+        const imagesPerProject = 30; // Change this to match your folder contents
 
-    let lastX = 0;
-    let lastY = 0;
-    let idleTimeout;
-    const distanceThreshold = 100; 
+        // 2. Generate the list of .png paths
+        const images = projects.flatMap(folder => 
+            Array.from({ length: imagesPerProject }, (_, i) => `images/${folder}/image${i + 1}.png`)
+        );
 
-    function spawnImage(x, y) {
-        // 2. THE RANDOMIZER: Pick a random index from 0 to 99
-        const randomIndex = Math.floor(Math.random() * images.length);
-        
-        const img = document.createElement('img');
-        img.src = images[randomIndex]; // Use the random index here
-        img.className = 'trail-image';
-        
-        img.style.left = `${x + window.scrollX}px`;
-        img.style.top = `${y + window.scrollY}px`;
-        
-        // Error handling if an image is missing
-        img.onerror = function() { this.style.display = 'none'; };
-        
-        document.body.appendChild(img);
-    }
+        let lastIndex = -1;
+        let lastX = 0;
+        let lastY = 0;
+        let idleTimeout;
+        const distanceThreshold = 100; 
 
-    document.addEventListener('mousemove', (e) => {
-        clearTimeout(idleTimeout);
-
-        if (lastX === 0 && lastY === 0) {
-            lastX = e.clientX;
-            lastY = e.clientY;
+        function spawnImage(x, y) {
+            let randomIndex;
+            
+            // Randomly pick a new image index (different from the last one)
+            do {
+                randomIndex = Math.floor(Math.random() * images.length);
+            } while (randomIndex === lastIndex);
+            
+            lastIndex = randomIndex;
+            
+            const img = document.createElement('img');
+            img.src = images[randomIndex];
+            img.className = 'trail-image';
+            
+            img.style.left = `${x + window.scrollX}px`;
+            img.style.top = `${y + window.scrollY}px`;
+            
+            // Hide if file is not found
+            img.onerror = function() { this.style.display = 'none'; };
+            
+            document.body.appendChild(img);
         }
 
-        const deltaX = e.clientX - lastX;
-        const deltaY = e.clientY - lastY;
-        const distanceMoved = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+        document.addEventListener('mousemove', (e) => {
+            clearTimeout(idleTimeout);
 
-        if (distanceMoved > distanceThreshold) {
-            spawnImage(e.clientX, e.clientY);
-            lastX = e.clientX;
-            lastY = e.clientY;
-        }
+            if (lastX === 0 && lastY === 0) {
+                lastX = e.clientX;
+                lastY = e.clientY;
+            }
 
-        idleTimeout = setTimeout(() => {
-            spawnImage(e.clientX, e.clientY);
-            lastX = e.clientX;
-            lastY = e.clientY;
-        }, 500);
-    });
-</script>
+            const deltaX = e.clientX - lastX;
+            const deltaY = e.clientY - lastY;
+            const distanceMoved = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+
+            if (distanceMoved > distanceThreshold) {
+                spawnImage(e.clientX, e.clientY);
+                lastX = e.clientX;
+                lastY = e.clientY;
+            }
+
+            idleTimeout = setTimeout(() => {
+                spawnImage(e.clientX, e.clientY);
+                lastX = e.clientX;
+                lastY = e.clientY;
+            }, 500);
+        });
+    </script>
 </body>
 </html>
