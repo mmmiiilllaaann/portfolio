@@ -89,13 +89,7 @@ Currently working as an Principal, Visual Design at DEPT®.</p>
     <script>
         // Updated array for GitHub/Local hosting
         // Ensure your images are in a folder named 'images'
-        const images = [
-            'images/image1.webp',
-            'images/image2.webp',
-            'images/image3.webp',
-            'images/image4.webp',
-            'images/image5.webp'
-        ];
+        const images = Array.from({ length: 100 }, (_, i) => `images/image${i + 1}.webp`);
 
         let currentImgIndex = 0;
         let lastX = 0;
