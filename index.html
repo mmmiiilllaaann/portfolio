@@ -91,7 +91,7 @@
 
         // 2. Generate the list of .png paths
         const images = projects.flatMap(folder => 
-            Array.from({ length: imagesPerProject }, (_, i) => `images/${folder}/image${i + 1}.png`)
+            Array.from({ length: imagesPerProject }, (_, i) => `images/${folder}/image${i + 1}.jpg`)
         );
 
         let lastIndex = -1;
