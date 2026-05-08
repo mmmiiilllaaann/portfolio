@@ -86,56 +86,56 @@ Currently working as an Principal, Visual Design at DEPT®.</p>
         </div>
     </nav>
 
-    <script>
-        // Updated array for GitHub/Local hosting
-        // Ensure your images are in a folder named 'images'
-        const images = Array.from({ length: 100 }, (_, i) => `images/image${i + 1}.webp`);
+  <script>
+    // 1. Generate the array for 100 images
+    const images = Array.from({ length: 100 }, (_, i) => `images/image${i + 1}.webp`);
 
-        let currentImgIndex = 0;
-        let lastX = 0;
-        let lastY = 0;
-        let idleTimeout;
-        const distanceThreshold = 100; 
+    let lastX = 0;
+    let lastY = 0;
+    let idleTimeout;
+    const distanceThreshold = 100; 
 
-        function spawnImage(x, y) {
-            const img = document.createElement('img');
-            img.src = images[currentImgIndex];
-            img.className = 'trail-image';
-            
-            img.style.left = `${x + window.scrollX}px`;
-            img.style.top = `${y + window.scrollY}px`;
-            
-            // Error handling if an image is missing
-            img.onerror = function() { this.style.display = 'none'; };
-            
-            document.body.appendChild(img);
-            currentImgIndex = (currentImgIndex + 1) % images.length;
+    function spawnImage(x, y) {
+        // 2. THE RANDOMIZER: Pick a random index from 0 to 99
+        const randomIndex = Math.floor(Math.random() * images.length);
+        
+        const img = document.createElement('img');
+        img.src = images[randomIndex]; // Use the random index here
+        img.className = 'trail-image';
+        
+        img.style.left = `${x + window.scrollX}px`;
+        img.style.top = `${y + window.scrollY}px`;
+        
+        // Error handling if an image is missing
+        img.onerror = function() { this.style.display = 'none'; };
+        
+        document.body.appendChild(img);
+    }
+
+    document.addEventListener('mousemove', (e) => {
+        clearTimeout(idleTimeout);
+
+        if (lastX === 0 && lastY === 0) {
+            lastX = e.clientX;
+            lastY = e.clientY;
         }
 
-        document.addEventListener('mousemove', (e) => {
-            clearTimeout(idleTimeout);
+        const deltaX = e.clientX - lastX;
+        const deltaY = e.clientY - lastY;
+        const distanceMoved = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
 
-            if (lastX === 0 && lastY === 0) {
-                lastX = e.clientX;
-                lastY = e.clientY;
-            }
+        if (distanceMoved > distanceThreshold) {
+            spawnImage(e.clientX, e.clientY);
+            lastX = e.clientX;
+            lastY = e.clientY;
+        }
 
-            const deltaX = e.clientX - lastX;
-            const deltaY = e.clientY - lastY;
-            const distanceMoved = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
-
-            if (distanceMoved > distanceThreshold) {
-                spawnImage(e.clientX, e.clientY);
-                lastX = e.clientX;
-                lastY = e.clientY;
-            }
-
-            idleTimeout = setTimeout(() => {
-                spawnImage(e.clientX, e.clientY);
-                lastX = e.clientX;
-                lastY = e.clientY;
-            }, 500);
-        });
-    </script>
+        idleTimeout = setTimeout(() => {
+            spawnImage(e.clientX, e.clientY);
+            lastX = e.clientX;
+            lastY = e.clientY;
+        }, 500);
+    });
+</script>
 </body>
 </html>
