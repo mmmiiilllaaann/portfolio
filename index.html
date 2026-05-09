@@ -31,7 +31,6 @@
             z-index: 1000;
             display: flex;
             justify-content: space-between;
-            /* Aligned to top to sit flush with the bio text */
             align-items: flex-start;
             mix-blend-mode: difference;
             color: white;
@@ -86,7 +85,6 @@
 
     <script>
         // 1. Configuration: Map each folder to its specific image count
-        // Ensure folder names match your GitHub folders EXACTLY
         const projectData = {
             'maracuya': 25,
             'eh': 50,
@@ -96,8 +94,8 @@
             'ath': 50,
             'boe': 50,
             'negro': 50,
-            'bh': 50
-            'nera': 9,
+            'bh': 50, // <-- THE BUG WAS HERE: Added the missing comma
+            'nera': 9
         };
 
         // 2. Generate the master list of .jpg paths based on specific counts
