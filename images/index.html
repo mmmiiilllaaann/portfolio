@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>martin guerrero milan</title>
+    <style>
+        /* Base Reset */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: #000000;
+            min-height: 100vh; 
+            overflow: hidden; /* Evita el scroll para una experiencia inmersiva */
+            font-family: 'Helvetica Neue', Arial, sans-serif; /* Tipografía más neutra */
+            color: #666666;
+        }
+
+        /* Sticky Navigation Bar */
+        nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background: rgba(0, 0, 0, 0);
+            padding: 20px; /* Un poco más de aire minimalista */
+            z-index: 1000;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            mix-blend-mode: difference;
+            color: white;
+        }
+
+        .nav-logo {
+            font-size: 1rem;
+            font-weight: normal;
+            text-transform: lowercase;
+            line-height: 1;
+        }
+
+        /* Bio & Contact Div */
+        .bio-contact {
+            max-width: 600px; /* Más angosto para una lectura más refinada */
+            font-size: 1rem;
+            line-height: 1.2;
+            text-align: left;
+        }
+
+        .bio-contact p {
+            margin-bottom: 15px;
+        }
+
+        .bio-contact a {
+            color: #ffffff;
+            text-decoration: none;
+            font-weight: normal;
+        }
+
+        /* Full Bleed Image Styling */
+        #hero-image {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            object-fit: cover; /* La clave para que sea responsive sin distorsión */
+            object-position: center;
+            z-index: 1;
+            pointer-events: none; /* Permite hacer clic en los links de arriba */
+            transition: opacity 0.1s ease-out;
+        }
+    </style>
+</head>
+<body>
+
+    <nav>
+        <div class="nav-logo">martin guerrero milan</div>
+        <div class="bio-contact">
+            <p>Designer based in Buenos Aires working creatively with tailored multidisciplinary teams across identity, campaigns and digital. Influenced by music, film, and the internet. Focused on exploring sensations and meanings through experimental techniques and narratives.</p>
+            <p>Get in touch: 
+                <a href="mailto:martinguerreromilan@gmail.com">email</a>, 
+                <a href="https://www.linkedin.com/in/martin-milan-aab124114/" target="_blank" rel="noopener noreferrer">linkedin</a>
+            </p>
+        </div>
+    </nav>
+
+    <!-- Única imagen que cambiará dinámicamente -->
+    <img id="hero-image" src="" alt="Portfolio work" style="opacity: 0;">
+
+    <script>
+        // 1. Configuration
+        const projectData = {
+            'maracuya': 50, 'prime': 50, 'renegade': 50, 'xfl': 50,
+            'motorola': 50, 'notco': 50, 'eh': 50, 'kamchatka': 50,
+            'ath': 50, 'nera': 50, 'yt': 50
+        };
+
+        // 2. Generate the master list of .jpg paths
+        const images = [];
+        for (const [folder, count] of Object.entries(projectData)) {
+            for (let i = 1; i <= count; i++) {
+                images.push(`images/${folder}/image${i}.jpg`);
+            }
+        }
+
+        let lastIndex = -1;
+        let lastX = 0;
+        let lastY = 0;
+        const distanceThreshold = 120; // Ajusta este valor para hacer el cambio más rápido o más lento
+        const heroImage = document.getElementById('hero-image');
+
+        function changeImage() {
+            if (images.length === 0) return;
+
+            let randomIndex;
+            do {
+                randomIndex = Math.floor(Math.random() * images.length);
+            } while (randomIndex === lastIndex && images.length > 1);
+            
+            lastIndex = randomIndex;
+            
+            // Actualiza la imagen y la hace visible
+            heroImage.src = images[randomIndex];
+            heroImage.style.opacity = '1';
+        }
+
+        // Event listener para el mouse
+        document.addEventListener('mousemove', (e) => {
+            if (lastX === 0 && lastY === 0) {
+                lastX = e.clientX;
+                lastY = e.clientY;
+            }
+
+            const deltaX = e.clientX - lastX;
+            const deltaY = e.clientY - lastY;
+            const distanceMoved = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+
+            // Solo cambia la imagen si el mouse recorrió suficiente distancia
+            if (distanceMoved > distanceThreshold) {
+                changeImage();
+                lastX = e.clientX;
+                lastY = e.clientY;
+            }
+        });
+
+        // Opcional: Mostrar una imagen inicial al cargar la web
+        window.onload = () => {
+            if(images.length > 0) changeImage();
+        };
+    </script>
+</body>
+</html>
