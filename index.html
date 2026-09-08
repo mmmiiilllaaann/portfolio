@@ -15,8 +15,8 @@
         body {
             background-color: #000000;
             min-height: 100vh; 
-            overflow-x: hidden;
-            font-family: 'Arial', sans-serif;
+            overflow: hidden; /* Evita el scroll para una experiencia inmersiva */
+            font-family: 'Helvetica Neue', Arial, sans-serif; /* Tipografía más neutra */
             color: #666666;
         }
 
@@ -27,7 +27,7 @@
             left: 0;
             width: 100%;
             background: rgba(0, 0, 0, 0);
-            padding: 10px;
+            padding: 20px; /* Un poco más de aire minimalista */
             z-index: 1000;
             display: flex;
             justify-content: space-between;
@@ -45,14 +45,14 @@
 
         /* Bio & Contact Div */
         .bio-contact {
-            max-width: 1000px;
+            max-width: 600px; /* Más angosto para una lectura más refinada */
             font-size: 1rem;
-            line-height: 1;
+            line-height: 1.2;
             text-align: left;
         }
 
         .bio-contact p {
-            margin-bottom: 10px;
+            margin-bottom: 15px;
         }
 
         .bio-contact a {
@@ -61,52 +61,46 @@
             font-weight: normal;
         }
 
-        /* Spawned Images Styling */
-        .trail-image {
-            position: absolute;
-            width: auto;
-            max-width: 1000px;
-            height: auto;
-            transform: translate(-50%, -50%);
-            pointer-events: none;
-            z-index: 10;
+        /* Full Bleed Image Styling */
+        #hero-image {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            object-fit: cover; /* La clave para que sea responsive sin distorsión */
+            object-position: center;
+            z-index: 1;
+            pointer-events: none; /* Permite hacer clic en los links de arriba */
+            transition: opacity 0.1s ease-out;
         }
     </style>
 </head>
 <body>
 
-<nav>
+    <nav>
         <div class="nav-logo">martin guerrero milan</div>
         <div class="bio-contact">
             <p>Designer based in Buenos Aires working creatively with tailored multidisciplinary teams across identity, campaigns and digital. Influenced by music, film, and the internet. Focused on exploring sensations and meanings through experimental techniques and narratives.</p>
-            
             <p>Get in touch: 
                 <a href="mailto:martinguerreromilan@gmail.com">email</a>, 
                 <a href="https://www.linkedin.com/in/martin-milan-aab124114/" target="_blank" rel="noopener noreferrer">linkedin</a>
             </p>
-
         </div>
     </nav>
 
+    <!-- Única imagen que cambiará dinámicamente -->
+    <img id="hero-image" src="" alt="Portfolio work" style="opacity: 0;">
 
     <script>
-        // 1. Configuration: Map each folder to its specific image count
+        // 1. Configuration
         const projectData = {
-            'maracuya': 50,
-            'prime': 50,
-            'renegade': 50,
-            'xfl': 50,
-            'motorola': 50,
-            'notco': 50,
-            'eh': 50,
-            'kamchatka': 50,
-            'ath': 50, // <-- THE BUG WAS HERE: Added the missing comma
-            'nera': 50,
-            'yt': 50,
-
+            'maracuya': 50, 'prime': 50, 'renegade': 50, 'xfl': 50,
+            'motorola': 50, 'notco': 50, 'eh': 50, 'kamchatka': 50,
+            'ath': 50, 'nera': 50, 'yt': 50
         };
 
-        // 2. Generate the master list of .jpg paths based on specific counts
+        // 2. Generate the master list of .jpg paths
         const images = [];
         for (const [folder, count] of Object.entries(projectData)) {
             for (let i = 1; i <= count; i++) {
@@ -117,37 +111,26 @@
         let lastIndex = -1;
         let lastX = 0;
         let lastY = 0;
-        let idleTimeout;
-        const distanceThreshold = 100; 
+        const distanceThreshold = 120; // Ajusta este valor para hacer el cambio más rápido o más lento
+        const heroImage = document.getElementById('hero-image');
 
-        function spawnImage(x, y) {
+        function changeImage() {
             if (images.length === 0) return;
 
             let randomIndex;
-            
-            // Randomly pick an image from the master list
             do {
                 randomIndex = Math.floor(Math.random() * images.length);
             } while (randomIndex === lastIndex && images.length > 1);
             
             lastIndex = randomIndex;
             
-            const img = document.createElement('img');
-            img.src = images[randomIndex];
-            img.className = 'trail-image';
-            
-            img.style.left = `${x + window.scrollX}px`;
-            img.style.top = `${y + window.scrollY}px`;
-            
-            // Error handling: if a specific file is missing, don't show a broken icon
-            img.onerror = function() { this.remove(); };
-            
-            document.body.appendChild(img);
+            // Actualiza la imagen y la hace visible
+            heroImage.src = images[randomIndex];
+            heroImage.style.opacity = '1';
         }
 
+        // Event listener para el mouse
         document.addEventListener('mousemove', (e) => {
-            clearTimeout(idleTimeout);
-
             if (lastX === 0 && lastY === 0) {
                 lastX = e.clientX;
                 lastY = e.clientY;
@@ -157,18 +140,18 @@
             const deltaY = e.clientY - lastY;
             const distanceMoved = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
 
+            // Solo cambia la imagen si el mouse recorrió suficiente distancia
             if (distanceMoved > distanceThreshold) {
-                spawnImage(e.clientX, e.clientY);
+                changeImage();
                 lastX = e.clientX;
                 lastY = e.clientY;
             }
-
-            idleTimeout = setTimeout(() => {
-                spawnImage(e.clientX, e.clientY);
-                lastX = e.clientX;
-                lastY = e.clientY;
-            }, 500);
         });
+
+        // Opcional: Mostrar una imagen inicial al cargar la web
+        window.onload = () => {
+            if(images.length > 0) changeImage();
+        };
     </script>
 </body>
 </html>
