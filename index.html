@@ -61,33 +61,35 @@
             font-weight: normal;
         }
 
-        /* Contenedor del Slideshow */
+        /* Contenedor del Slideshow centrado absoluto */
         #slider-container {
             position: fixed;
             top: 0;
             left: 0;
-            width: 100%;
-            height: 100%;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
             z-index: 1;
             background-color: #000000;
         }
 
-        /* Sistema de doble imagen para evitar parpadeos */
+        /* Matemática para mantener siempre 16:9 sin cortar imagen */
         .hero-image {
             position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            object-fit: cover; 
-            object-position: center;
+            width: 100vw;
+            height: 56.25vw; /* 16:9 aspect ratio (9 / 16 = 0.5625) */
+            max-height: 100vh;
+            max-width: 177.78vh; /* 16:9 aspect ratio (16 / 9 = 1.7778) */
+            object-fit: contain; /* Evita que la imagen se ampute */
             pointer-events: none; 
-            transition: opacity 0.0s; 
-            opacity: 0; /* Oculta por defecto */
+            display: none; /* Hard cut por defecto */
         }
 
+        /* Activación por corte directo, sin transiciones */
         .hero-image.active {
-            opacity: 1; /* Muestra solo la imagen activa */
+            display: block; 
         }
     </style>
 </head>
@@ -104,7 +106,6 @@
         </div>
     </nav>
 
-    <!-- Usamos dos imágenes superpuestas. Quitamos el atributo 'alt' para que no ensucie la pantalla si hay delay -->
     <div id="slider-container">
         <img id="img1" class="hero-image active" src="">
         <img id="img2" class="hero-image" src="">
@@ -118,7 +119,7 @@
             'prime': 50, 'renegade': 50, 'rga': 50, 'sims': 50, 'xfl': 50, 'yt': 50
         };
 
-        // 2. Generar la lista maestra y mezclarla (shuffle)
+        // 2. Generar la lista maestra y mezclarla
         let images = [];
         for (const [folder, count] of Object.entries(projectData)) {
             for (let i = 1; i <= count; i++) {
@@ -131,54 +132,57 @@
         let currentIndex = 0;
         const slideInterval = 2000; 
         
-        // Referencias a las dos etiquetas de imagen
         const img1 = document.getElementById('img1');
         const img2 = document.getElementById('img2');
         let activeImg = img1;
         let nextImg = img2;
+        let isFirstLoad = true;
 
-        function showNextImage() {
+        // Función que precarga la siguiente imagen en el background
+        function preloadNextImage() {
             if (images.length === 0) return;
 
-            // Pre-cargamos la imagen en la memoria antes de inyectarla al HTML
-            const tempImage = new Image();
-            tempImage.src = images[currentIndex];
+            nextImg.src = images[currentIndex];
 
-            // Si la imagen existe y carga correctamente:
-            tempImage.onload = () => {
-                nextImg.src = tempImage.src;
-                nextImg.classList.add('active');
-                activeImg.classList.remove('active');
-
-                // Intercambiamos los roles (la nueva pasa a ser la activa)
-                const temp = activeImg;
-                activeImg = nextImg;
-                nextImg = temp;
-
-                // Preparamos el índice para la siguiente ronda
-                currentIndex = (currentIndex + 1) % images.length;
-            };
-
-            // Si la imagen NO existe (error 404):
-            tempImage.onerror = () => {
-                // Eliminamos esta ruta fallida del array para no volver a intentar cargarla
+            nextImg.onerror = () => {
+                // Si hay error (404), borra la ruta y prueba la siguiente
                 images.splice(currentIndex, 1);
-                
-                // Si al eliminarla nos pasamos del largo del array, volvemos a cero
-                if (currentIndex >= images.length) {
-                    currentIndex = 0;
-                }
-                
-                // Llamamos a la función inmediatamente para buscar una foto que sí exista, sin esperar al timer
-                showNextImage();
+                if (currentIndex >= images.length) currentIndex = 0;
+                preloadNextImage();
             };
+
+            nextImg.onload = () => {
+                // Si es la primera vez que carga la web, forzamos el primer frame rápido
+                if(isFirstLoad) {
+                    swapImage();
+                    isFirstLoad = false;
+                    setInterval(swapImage, slideInterval);
+                }
+            }
         }
 
-        // 4. Iniciar el loop al cargar la página
+        // Función que ejecuta el corte (Hard Cut) e invoca la siguiente precarga
+        function swapImage() {
+            if (images.length === 0) return;
+
+            // Corte duro: cambiamos las clases
+            nextImg.classList.add('active');
+            activeImg.classList.remove('active');
+
+            // Intercambiamos referencias
+            const temp = activeImg;
+            activeImg = nextImg;
+            nextImg = temp;
+
+            // Avanzamos el índice y precargamos la siguiente para que esté lista para el próximo tick
+            currentIndex = (currentIndex + 1) % images.length;
+            preloadNextImage();
+        }
+
+        // 4. Iniciar el ciclo
         window.onload = () => {
             if(images.length > 0) {
-                showNextImage(); 
-                setInterval(showNextImage, slideInterval); 
+                preloadNextImage(); 
             }
         };
     </script>
