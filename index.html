@@ -15,8 +15,8 @@
         body {
             background-color: #000000;
             min-height: 100vh; 
-            overflow: hidden; /* Evita el scroll para una experiencia inmersiva */
-            font-family: 'Helvetica Neue', Arial, sans-serif; /* Tipografía más neutra */
+            overflow: hidden; 
+            font-family: 'Helvetica Neue', Arial, sans-serif; 
             color: #666666;
         }
 
@@ -27,7 +27,7 @@
             left: 0;
             width: 100%;
             background: rgba(0, 0, 0, 0);
-            padding: 20px; /* Un poco más de aire minimalista */
+            padding: 20px; 
             z-index: 1000;
             display: flex;
             justify-content: space-between;
@@ -45,7 +45,7 @@
 
         /* Bio & Contact Div */
         .bio-contact {
-            max-width: 600px; /* Más angosto para una lectura más refinada */
+            max-width: 600px; 
             font-size: 1rem;
             line-height: 1.2;
             text-align: left;
@@ -68,11 +68,11 @@
             left: 0;
             width: 100vw;
             height: 100vh;
-            object-fit: cover; /* La clave para que sea responsive sin distorsión */
+            object-fit: cover; 
             object-position: center;
             z-index: 1;
-            pointer-events: none; /* Permite hacer clic en los links de arriba */
-            transition: opacity 0.1s ease-out;
+            pointer-events: none; 
+            transition: opacity 0.3s ease-in-out; /* Transición suave entre imágenes */
         }
     </style>
 </head>
@@ -101,56 +101,37 @@
         };
 
         // 2. Generate the master list of .jpg paths
-        const images = [];
+        let images = [];
         for (const [folder, count] of Object.entries(projectData)) {
             for (let i = 1; i <= count; i++) {
                 images.push(`images/${folder}/image${i}.jpg`);
             }
         }
 
-        let lastIndex = -1;
-        let lastX = 0;
-        let lastY = 0;
-        const distanceThreshold = 50; // Ajusta este valor para hacer el cambio más rápido o más lento
+        // 3. Mezclar (shuffle) el array para que el orden de los proyectos sea dinámico
+        images = images.sort(() => Math.random() - 0.5);
+
+        let currentIndex = 0;
         const heroImage = document.getElementById('hero-image');
+        const slideInterval = 1200; // Velocidad del slideshow en milisegundos (1.2 segundos)
 
-        function changeImage() {
+        function showNextImage() {
             if (images.length === 0) return;
-
-            let randomIndex;
-            do {
-                randomIndex = Math.floor(Math.random() * images.length);
-            } while (randomIndex === lastIndex && images.length > 1);
             
-            lastIndex = randomIndex;
-            
-            // Actualiza la imagen y la hace visible
-            heroImage.src = images[randomIndex];
+            // Actualiza la imagen y asegura que sea visible
+            heroImage.src = images[currentIndex];
             heroImage.style.opacity = '1';
+
+            // Avanza al siguiente índice, y vuelve a 0 si llega al final
+            currentIndex = (currentIndex + 1) % images.length;
         }
 
-        // Event listener para el mouse
-        document.addEventListener('mousemove', (e) => {
-            if (lastX === 0 && lastY === 0) {
-                lastX = e.clientX;
-                lastY = e.clientY;
-            }
-
-            const deltaX = e.clientX - lastX;
-            const deltaY = e.clientY - lastY;
-            const distanceMoved = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
-
-            // Solo cambia la imagen si el mouse recorrió suficiente distancia
-            if (distanceMoved > distanceThreshold) {
-                changeImage();
-                lastX = e.clientX;
-                lastY = e.clientY;
-            }
-        });
-
-        // Opcional: Mostrar una imagen inicial al cargar la web
+        // 4. Iniciar el slideshow apenas carga la página
         window.onload = () => {
-            if(images.length > 0) changeImage();
+            if(images.length > 0) {
+                showNextImage(); // Muestra la primera inmediatamente
+                setInterval(showNextImage, slideInterval); // Ejecuta el loop
+            }
         };
     </script>
 </body>
