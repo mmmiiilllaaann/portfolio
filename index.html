@@ -61,18 +61,33 @@
             font-weight: normal;
         }
 
-        /* Full Bleed Image Styling */
-        #hero-image {
+        /* Contenedor del Slideshow */
+        #slider-container {
             position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 1;
+            background-color: #000000;
+        }
+
+        /* Sistema de doble imagen para evitar parpadeos */
+        .hero-image {
+            position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
             object-fit: cover; 
             object-position: center;
-            z-index: 1;
             pointer-events: none; 
-            transition: opacity 0.0s; /* Transición suave entre imágenes */
+            transition: opacity 0.4s ease-in-out; 
+            opacity: 0; /* Oculta por defecto */
+        }
+
+        .hero-image.active {
+            opacity: 1; /* Muestra solo la imagen activa */
         }
     </style>
 </head>
@@ -89,48 +104,81 @@
         </div>
     </nav>
 
-    <!-- Única imagen que cambiará dinámicamente -->
-    <img id="hero-image" src="" alt="Portfolio work" style="opacity: 0;">
+    <!-- Usamos dos imágenes superpuestas. Quitamos el atributo 'alt' para que no ensucie la pantalla si hay delay -->
+    <div id="slider-container">
+        <img id="img1" class="hero-image active" src="">
+        <img id="img2" class="hero-image" src="">
+    </div>
 
     <script>
-        // 1. Configuration
+        // 1. Configuración de carpetas
         const projectData = {
             'maracuya': 50, 'prime': 50, 'renegade': 50, 'xfl': 50,
             'motorola': 50, 'notco': 50, 'eh': 50, 'kamchatka': 50,
             'ath': 50, 'nera': 50, 'yt': 50, 'sims': 50, 'rga': 50
         };
 
-        // 2. Generate the master list of .jpg paths
+        // 2. Generar la lista maestra y mezclarla (shuffle)
         let images = [];
         for (const [folder, count] of Object.entries(projectData)) {
             for (let i = 1; i <= count; i++) {
                 images.push(`images/${folder}/image${i}.jpg`);
             }
         }
-
-        // 3. Mezclar (shuffle) el array para que el orden de los proyectos sea dinámico
         images = images.sort(() => Math.random() - 0.5);
 
+        // 3. Variables de control
         let currentIndex = 0;
-        const heroImage = document.getElementById('hero-image');
-        const slideInterval = 1200; // Velocidad del slideshow en milisegundos (1.2 segundos)
+        const slideInterval = 1200; 
+        
+        // Referencias a las dos etiquetas de imagen
+        const img1 = document.getElementById('img1');
+        const img2 = document.getElementById('img2');
+        let activeImg = img1;
+        let nextImg = img2;
 
         function showNextImage() {
             if (images.length === 0) return;
-            
-            // Actualiza la imagen y asegura que sea visible
-            heroImage.src = images[currentIndex];
-            heroImage.style.opacity = '1';
 
-            // Avanza al siguiente índice, y vuelve a 0 si llega al final
-            currentIndex = (currentIndex + 1) % images.length;
+            // Pre-cargamos la imagen en la memoria antes de inyectarla al HTML
+            const tempImage = new Image();
+            tempImage.src = images[currentIndex];
+
+            // Si la imagen existe y carga correctamente:
+            tempImage.onload = () => {
+                nextImg.src = tempImage.src;
+                nextImg.classList.add('active');
+                activeImg.classList.remove('active');
+
+                // Intercambiamos los roles (la nueva pasa a ser la activa)
+                const temp = activeImg;
+                activeImg = nextImg;
+                nextImg = temp;
+
+                // Preparamos el índice para la siguiente ronda
+                currentIndex = (currentIndex + 1) % images.length;
+            };
+
+            // Si la imagen NO existe (error 404):
+            tempImage.onerror = () => {
+                // Eliminamos esta ruta fallida del array para no volver a intentar cargarla
+                images.splice(currentIndex, 1);
+                
+                // Si al eliminarla nos pasamos del largo del array, volvemos a cero
+                if (currentIndex >= images.length) {
+                    currentIndex = 0;
+                }
+                
+                // Llamamos a la función inmediatamente para buscar una foto que sí exista, sin esperar al timer
+                showNextImage();
+            };
         }
 
-        // 4. Iniciar el slideshow apenas carga la página
+        // 4. Iniciar el loop al cargar la página
         window.onload = () => {
             if(images.length > 0) {
-                showNextImage(); // Muestra la primera inmediatamente
-                setInterval(showNextImage, slideInterval); // Ejecuta el loop
+                showNextImage(); 
+                setInterval(showNextImage, slideInterval); 
             }
         };
     </script>
