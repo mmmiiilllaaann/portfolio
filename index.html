@@ -75,19 +75,18 @@
             background-color: #000000;
         }
 
-        /* Matemática para mantener siempre 16:9 sin cortar imagen */
+        /* Contenedor estricto 16:9 sin cortar imagen */
         .hero-image {
             position: absolute;
             width: 100vw;
-            height: 56.25vw; /* 16:9 aspect ratio (9 / 16 = 0.5625) */
+            height: 56.25vw; /* Ratio 16:9 (9/16) */
             max-height: 100vh;
-            max-width: 177.78vh; /* 16:9 aspect ratio (16 / 9 = 1.7778) */
-            object-fit: contain; /* Evita que la imagen se ampute */
+            max-width: 177.78vh; /* Ratio 16:9 (16/9) */
+            object-fit: contain; 
             pointer-events: none; 
             display: none; /* Hard cut por defecto */
         }
 
-        /* Activación por corte directo, sin transiciones */
         .hero-image.active {
             display: block; 
         }
@@ -112,25 +111,30 @@
     </div>
 
     <script>
-        // 1. Configuración de carpetas
+        // 1. Configuración de carpetas y cantidad de imágenes estimadas
         const projectData = {
             'ath': 50, 'eg': 50, 'kamchatka': 50, 'maracuya': 50,
             'motorola': 50, 'nera': 50, 'notco': 50, 'presos': 50,
             'prime': 50, 'renegade': 50, 'rga': 50, 'sims': 50, 'xfl': 50, 'yt': 50
         };
 
-        // 2. Generar la lista maestra y mezclarla
+        // Detección automática del base path para GitHub Pages o entorno local
+        const pathname = window.location.pathname;
+        const basePath = pathname.includes('/portfolio/') ? '/portfolio/' : '/';
+        const origin = window.location.origin;
+
+        // 2. Generar la lista maestra de rutas absolutas seguras y mezclarla (shuffle)
         let images = [];
         for (const [folder, count] of Object.entries(projectData)) {
             for (let i = 1; i <= count; i++) {
-                images.push(`images/${folder}/image${i}.jpg`);
+                images.push(`${origin}${basePath}images/${folder}/image${i}.jpg`);
             }
         }
         images = images.sort(() => Math.random() - 0.5);
 
         // 3. Variables de control
         let currentIndex = 0;
-        const slideInterval = 2000; 
+        const slideInterval = 2000; // Duración exacta en milisegundos por imagen
         
         const img1 = document.getElementById('img1');
         const img2 = document.getElementById('img2');
@@ -138,51 +142,49 @@
         let nextImg = img2;
         let isFirstLoad = true;
 
-        // Función que precarga la siguiente imagen en el background
-        function preloadNextImage() {
+        function loadAndSwapNext() {
             if (images.length === 0) return;
 
-            nextImg.src = images[currentIndex];
+            const targetSrc = images[currentIndex];
+            const tempImage = new Image();
+            tempImage.src = targetSrc;
 
-            nextImg.onerror = () => {
-                // Si hay error (404), borra la ruta y prueba la siguiente
-                images.splice(currentIndex, 1);
-                if (currentIndex >= images.length) currentIndex = 0;
-                preloadNextImage();
+            tempImage.onload = () => {
+                // La imagen existe y cargó bien: asignamos y hacemos el corte por hard cut
+                nextImg.src = targetSrc;
+                nextImg.classList.add('active');
+                activeImg.classList.remove('active');
+
+                // Intercambiar referencias de capas
+                const temp = activeImg;
+                activeImg = nextImg;
+                nextImg = temp;
+
+                // Avanzar índice de forma segura
+                currentIndex = (currentIndex + 1) % images.length;
+
+                if (isFirstLoad) {
+                    isFirstLoad = false;
+                    setInterval(triggerNextSlide, slideInterval);
+                }
             };
 
-            nextImg.onload = () => {
-                // Si es la primera vez que carga la web, forzamos el primer frame rápido
-                if(isFirstLoad) {
-                    swapImage();
-                    isFirstLoad = false;
-                    setInterval(swapImage, slideInterval);
-                }
-            }
+            tempImage.onerror = () => {
+                // Si la imagen da 404 (no existe físicamente), saltamos a la siguiente de inmediato
+                // sin romper el flujo ni dejar la pantalla en negro
+                currentIndex = (currentIndex + 1) % images.length;
+                loadAndSwapNext();
+            };
         }
 
-        // Función que ejecuta el corte (Hard Cut) e invoca la siguiente precarga
-        function swapImage() {
-            if (images.length === 0) return;
-
-            // Corte duro: cambiamos las clases
-            nextImg.classList.add('active');
-            activeImg.classList.remove('active');
-
-            // Intercambiamos referencias
-            const temp = activeImg;
-            activeImg = nextImg;
-            nextImg = temp;
-
-            // Avanzamos el índice y precargamos la siguiente para que esté lista para el próximo tick
-            currentIndex = (currentIndex + 1) % images.length;
-            preloadNextImage();
+        function triggerNextSlide() {
+            loadAndSwapNext();
         }
 
-        // 4. Iniciar el ciclo
+        // 4. Iniciar el loop al cargar la página
         window.onload = () => {
-            if(images.length > 0) {
-                preloadNextImage(); 
+            if (images.length > 0) {
+                loadAndSwapNext();
             }
         };
     </script>
