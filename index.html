@@ -94,57 +94,6 @@
 </head>
 <body>
 
-    <!-- ========================================== -->
-    <!-- PROTECCIÓN POR CONTRASEÑA PARA PORTFOLIO   -->
-    <!-- ========================================== -->
-    <div id="portfolio-auth-overlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #0a0a0a; z-index: 999999; display: flex; align-items: center; justify-content: center; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #fff;">
-      <div style="background: #141414; padding: 40px; border-radius: 12px; border: 1px solid #222; box-shadow: 0 20px 40px rgba(0,0,0,0.6); width: 100%; max-width: 360px; text-align: center; box-sizing: border-box;">
-        <h2 style="margin: 0 0 8px 0; font-size: 20px; font-weight: 500; letter-spacing: -0.5px;">Acceso Protegido</h2>
-        <p style="color: #888; font-size: 13px; margin: 0 0 24px 0;">Ingresá la contraseña para ver el contenido.</p>
-        <form id="auth-form" onsubmit="handleAuth(event)">
-          <input type="password" id="auth-password" placeholder="Contraseña..." required style="width: 100%; padding: 12px 14px; border-radius: 6px; border: 1px solid #333; background: #1f1f1f; color: #fff; font-size: 14px; box-sizing: border-box; margin-bottom: 14px; outline: none; transition: border-color 0.2s;" onfocus="this.style.borderColor='#666'" onblur="this.style.borderColor='#333'">
-          <button type="submit" style="width: 100%; padding: 12px; border-radius: 6px; border: none; background: #fff; color: #000; font-weight: 500; font-size: 14px; cursor: pointer; transition: opacity 0.2s;" onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">Ingresar</button>
-          <p id="auth-error" style="color: #ff5555; font-size: 12px; margin-top: 12px; display: none;">Contraseña incorrecta.</p>
-        </form>
-      </div>
-    </div>
-
-    <script>
-      // Hash SHA-256 (este hash corresponde a la contraseña por defecto: "portfolio2026")
-      const CORRECT_HASH = "0ed75a46f16ad1b60c8253f6249a87681ef82dbc0cbced4c7de9f5657803c215";
-
-      async function hashString(string) {
-        const encoder = new TextEncoder();
-        const data = encoder.encode(string);
-        const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-        const hashArray = Array.from(new Uint8Array(hashBuffer));
-        return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-      }
-
-      // Verificar si ya fue autenticado en esta sesión del navegador
-      if (sessionStorage.getItem('portfolio_authenticated') === 'true') {
-        document.getElementById('portfolio-auth-overlay').style.display = 'none';
-      }
-
-      async function handleAuth(event) {
-        event.preventDefault();
-        const inputPass = document.getElementById('auth-password').value;
-        const inputHash = await hashString(inputPass);
-        const errorMsg = document.getElementById('auth-error');
-
-        if (inputHash === CORRECT_HASH) {
-          sessionStorage.setItem('portfolio_authenticated', 'true');
-          const overlay = document.getElementById('portfolio-auth-overlay');
-          overlay.style.opacity = '0';
-          overlay.style.transition = 'opacity 0.3s ease';
-          setTimeout(() => { overlay.style.display = 'none'; }, 300);
-        } else {
-          errorMsg.style.display = 'block';
-          document.getElementById('auth-password').value = '';
-        }
-      }
-    </script>
-
     <nav>
         <div class="nav-logo">martin guerrero milan</div>
         <div class="bio-contact">
