@@ -12,83 +12,129 @@
             box-sizing: border-box;
         }
 
-        body {
+        html, body {
             background-color: #000000;
-            min-height: 100vh; 
-            overflow: hidden; 
-            font-family: 'Helvetica Neue', Arial, sans-serif; 
-            color: #666666;
+            min-height: 100vh;
+            width: 100%;
+            overflow-x: hidden;
+            font-family: 'Arial', sans-serif;
+            color: #ffffff;
+            -webkit-font-smoothing: antialiased;
         }
 
-        /* Sticky Navigation Bar */
+        /* Sticky Navigation & Bio Overlay */
         nav {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
-            background: rgba(0, 0, 0, 0);
-            padding: 20px; 
+            padding: 12px;
             z-index: 1000;
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
+            gap: 24px;
             mix-blend-mode: difference;
-            color: white;
+            color: #ffffff;
+            pointer-events: none;
         }
 
         .nav-logo {
-            font-size: 1rem;
+            font-size: 0.78rem;
             font-weight: normal;
             text-transform: lowercase;
-            line-height: 1;
+            line-height: 1.25;
+            white-space: nowrap;
+            pointer-events: auto;
         }
 
-        /* Bio & Contact Div */
         .bio-contact {
-            max-width: 600px; 
-            font-size: 1rem;
-            line-height: 1.2;
+            max-width: 640px;
+            font-size: 0.78rem;
+            line-height: 1.25;
             text-align: left;
+            pointer-events: auto;
         }
 
         .bio-contact p {
-            margin-bottom: 15px;
+            margin-bottom: 8px;
+        }
+
+        .bio-contact p:last-child {
+            margin-bottom: 0;
         }
 
         .bio-contact a {
             color: #ffffff;
             text-decoration: none;
-            font-weight: normal;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.4);
         }
 
-        /* Contenedor del Slideshow centrado absoluto */
-        #slider-container {
+        .bio-contact a:hover {
+            border-bottom-color: #ffffff;
+        }
+
+        /* Responsive Stack on Mobile Screens */
+        @media (max-width: 640px) {
+            nav {
+                flex-direction: column;
+                gap: 8px;
+                padding: 10px;
+            }
+
+            .bio-contact {
+                max-width: 100%;
+            }
+        }
+
+        /* Infinite Vertical Image Stream */
+        #feed {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            gap: 0px;
+        }
+
+        .feed-image {
+            display: block;
+            width: 100%;
+            height: auto;
+            cursor: zoom-in;
+            user-select: none;
+        }
+
+        /* Invisible Trigger for Infinite Scroll */
+        #sentinel {
+            width: 100%;
+            height: 1px;
+        }
+
+        /* Fullscreen Lightbox Overlay */
+        #lightbox {
             position: fixed;
-            top: 0;
-            left: 0;
+            inset: 0;
             width: 100vw;
             height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 1;
             background-color: #000000;
+            z-index: 2000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            cursor: zoom-out;
         }
 
-        /* Contenedor estricto 16:9 sin cortar imagen */
-        .hero-image {
-            position: absolute;
-            width: 100vw;
-            height: 56.25vw; /* Ratio 16:9 (9/16) */
+        #lightbox.active {
+            display: flex;
+        }
+
+        #lightbox-img {
+            max-width: 100vw;
             max-height: 100vh;
-            max-width: 177.78vh; /* Ratio 16:9 (16/9) */
-            object-fit: contain; 
-            pointer-events: none; 
-            display: none; /* Hard cut por defecto */
-        }
-
-        .hero-image.active {
-            display: block; 
+            width: auto;
+            height: auto;
+            object-fit: contain;
+            display: block;
+            user-select: none;
         }
     </style>
 </head>
@@ -97,7 +143,7 @@
     <nav>
         <div class="nav-logo">martin guerrero milan</div>
         <div class="bio-contact">
-            <p>Designer based in Argentina working globally with tailored multidisciplinary teams across identity and motion. Influenced by music, film, and the internet. Focused on exploring sensations and meanings through experimental techniques and narratives.</p>
+            <p>Designer based in Buenos Aires working creatively with tailored multidisciplinary teams across identity, campaigns and digital. Influenced by music, film, and the internet. Focused on exploring sensations and meanings through experimental techniques and narratives.</p>
             <p>Get in touch: 
                 <a href="mailto:martinguerreromilan@gmail.com">email</a>, 
                 <a href="https://www.linkedin.com/in/martin-milan-aab124114/" target="_blank" rel="noopener noreferrer">linkedin</a>
@@ -105,88 +151,123 @@
         </div>
     </nav>
 
-    <div id="slider-container">
-        <img id="img1" class="hero-image active" src="">
-        <img id="img2" class="hero-image" src="">
+    <main id="feed"></main>
+    <div id="sentinel"></div>
+
+    <!-- Fullscreen View (Same Window) -->
+    <div id="lightbox" role="dialog" aria-modal="true" aria-label="Fullscreen image view">
+        <img id="lightbox-img" src="" alt="">
     </div>
 
     <script>
-        // 1. Configuración de carpetas y cantidad de imágenes estimadas
-        const projectData = {
-            'ath': 50, 'eg': 50, 'kamchatka': 50, 'maracuya': 50,
-            'motorola': 50, 'nera': 50, 'notco': 50, 'presos': 50,
-            'prime': 50, 'renegade': 50, 'rga': 50, 'sims': 50, 'xfl': 50, 'yt': 50
-        };
+        // 1. Set the upper limit of numbered images in your single /images folder.
+        // Any missing numbers are automatically skipped, so you can upload new images
+        // (image1.jpg, image2.jpg, ...) up to this limit without editing the code.
+        const MAX_IMAGES = 150;
 
-        // Detección automática del base path para GitHub Pages o entorno local
-        const pathname = window.location.pathname;
-        const basePath = pathname.includes('/portfolio/') ? '/portfolio/' : '/';
-        const origin = window.location.origin;
+        // 2. Build master list from the single /images folder
+        let masterImages = Array.from(
+            { length: MAX_IMAGES },
+            (_, i) => `images/image${i + 1}.jpg`
+        );
 
-        // 2. Generar la lista maestra de rutas absolutas seguras y mezclarla (shuffle)
-        let images = [];
-        for (const [folder, count] of Object.entries(projectData)) {
-            for (let i = 1; i <= count; i++) {
-                images.push(`${origin}${basePath}images/${folder}/image${i}.jpg`);
+        const feed = document.getElementById('feed');
+        const sentinel = document.getElementById('sentinel');
+        const lightbox = document.getElementById('lightbox');
+        const lightboxImg = document.getElementById('lightbox-img');
+
+        let shuffledQueue = [];
+        let lastShownSrc = '';
+        const BATCH_SIZE = 8;
+
+        // Fisher-Yates shuffle so images appear in random order without immediate repeats
+        function refillQueue() {
+            shuffledQueue = [...masterImages];
+            for (let i = shuffledQueue.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [shuffledQueue[i], shuffledQueue[j]] = [shuffledQueue[j], shuffledQueue[i]];
+            }
+            if (shuffledQueue.length > 1 && shuffledQueue[0] === lastShownSrc) {
+                shuffledQueue.push(shuffledQueue.shift());
             }
         }
-        images = images.sort(() => Math.random() - 0.5);
 
-        // 3. Variables de control
-        let currentIndex = 0;
-        const slideInterval = 2000; // Duración exacta en milisegundos por imagen
-        
-        const img1 = document.getElementById('img1');
-        const img2 = document.getElementById('img2');
-        let activeImg = img1;
-        let nextImg = img2;
-        let isFirstLoad = true;
+        function getNextImageSrc() {
+            if (shuffledQueue.length === 0) {
+                refillQueue();
+            }
+            const nextSrc = shuffledQueue.shift();
+            lastShownSrc = nextSrc;
+            return nextSrc;
+        }
 
-        function loadAndSwapNext() {
-            if (images.length === 0) return;
+        function appendSingleImage() {
+            if (masterImages.length === 0) return;
 
-            const targetSrc = images[currentIndex];
-            const tempImage = new Image();
-            tempImage.src = targetSrc;
+            const src = getNextImageSrc();
+            const img = document.createElement('img');
+            img.src = src;
+            img.className = 'feed-image';
+            img.loading = 'lazy';
+            img.decoding = 'async';
 
-            tempImage.onload = () => {
-                // La imagen existe y cargó bien: asignamos y hacemos el corte por hard cut
-                nextImg.src = targetSrc;
-                nextImg.classList.add('active');
-                activeImg.classList.remove('active');
-
-                // Intercambiar referencias de capas
-                const temp = activeImg;
-                activeImg = nextImg;
-                nextImg = temp;
-
-                // Avanzar índice de forma segura
-                currentIndex = (currentIndex + 1) % images.length;
-
-                if (isFirstLoad) {
-                    isFirstLoad = false;
-                    setInterval(triggerNextSlide, slideInterval);
+            // If an image number doesn't exist yet, remove it from the pool and pull another
+            img.onerror = () => {
+                img.remove();
+                masterImages = masterImages.filter(item => item !== src);
+                shuffledQueue = shuffledQueue.filter(item => item !== src);
+                if (masterImages.length > 0) {
+                    appendSingleImage();
                 }
             };
 
-            tempImage.onerror = () => {
-                // Si la imagen da 404 (no existe físicamente), saltamos a la siguiente de inmediato
-                // sin romper el flujo ni dejar la pantalla en negro
-                currentIndex = (currentIndex + 1) % images.length;
-                loadAndSwapNext();
-            };
+            // Open clicked image in fullscreen within the same window
+            img.addEventListener('click', () => {
+                openLightbox(src);
+            });
+
+            feed.appendChild(img);
         }
 
-        function triggerNextSlide() {
-            loadAndSwapNext();
-        }
-
-        // 4. Iniciar el loop al cargar la página
-        window.onload = () => {
-            if (images.length > 0) {
-                loadAndSwapNext();
+        function loadBatch(count = BATCH_SIZE) {
+            for (let i = 0; i < count; i++) {
+                appendSingleImage();
             }
-        };
+        }
+
+        // Fullscreen Lightbox Controls
+        function openLightbox(src) {
+            lightboxImg.src = src;
+            lightbox.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeLightbox() {
+            lightbox.classList.remove('active');
+            lightboxImg.src = '';
+            document.body.style.overflow = '';
+        }
+
+        lightbox.addEventListener('click', closeLightbox);
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && lightbox.classList.contains('active')) {
+                closeLightbox();
+            }
+        });
+
+        // Infinite Scroll Observer
+        const observer = new IntersectionObserver((entries) => {
+            if (entries[0].isIntersecting) {
+                loadBatch(BATCH_SIZE);
+            }
+        }, {
+            rootMargin: '1200px'
+        });
+
+        // Initial load
+        loadBatch(BATCH_SIZE);
+        observer.observe(sentinel);
     </script>
 </body>
 </html>
