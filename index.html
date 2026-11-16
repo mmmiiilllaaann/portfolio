@@ -160,16 +160,15 @@
     </div>
 
     <script>
-        // 1. Set the upper limit of numbered images in your single /images folder.
-        // Any missing numbers are automatically skipped, so you can upload new images
-        // (image1.jpg, image2.jpg, ...) up to this limit without editing the code.
+        // 1. Upper limit of numbered files in your single /images folder.
+        // Each slot accepts either .jpg or .gif (e.g., image1.jpg, image2.gif, image3.jpg).
         const MAX_IMAGES = 150;
 
-        // 2. Build master list from the single /images folder
-        let masterImages = Array.from(
-            { length: MAX_IMAGES },
-            (_, i) => `images/image${i + 1}.jpg`
-        );
+        // 2. Build master pool of base paths; resolved extension (.jpg or .gif) is cached once found
+        let masterItems = Array.from({ length: MAX_IMAGES }, (_, i) => ({
+            base: `images/image${i + 1}`,
+            ext: null
+        }));
 
         const feed = document.getElementById('feed');
         const sentinel = document.getElementById('sentinel');
@@ -177,53 +176,68 @@
         const lightboxImg = document.getElementById('lightbox-img');
 
         let shuffledQueue = [];
-        let lastShownSrc = '';
+        let lastShownBase = '';
         const BATCH_SIZE = 8;
 
         // Fisher-Yates shuffle so images appear in random order without immediate repeats
         function refillQueue() {
-            shuffledQueue = [...masterImages];
+            shuffledQueue = [...masterItems];
             for (let i = shuffledQueue.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
                 [shuffledQueue[i], shuffledQueue[j]] = [shuffledQueue[j], shuffledQueue[i]];
             }
-            if (shuffledQueue.length > 1 && shuffledQueue[0] === lastShownSrc) {
+            if (shuffledQueue.length > 1 && shuffledQueue[0].base === lastShownBase) {
                 shuffledQueue.push(shuffledQueue.shift());
             }
         }
 
-        function getNextImageSrc() {
+        function getNextItem() {
             if (shuffledQueue.length === 0) {
                 refillQueue();
             }
-            const nextSrc = shuffledQueue.shift();
-            lastShownSrc = nextSrc;
-            return nextSrc;
+            const nextItem = shuffledQueue.shift();
+            lastShownBase = nextItem.base;
+            return nextItem;
         }
 
         function appendSingleImage() {
-            if (masterImages.length === 0) return;
+            if (masterItems.length === 0) return;
 
-            const src = getNextImageSrc();
+            const item = getNextItem();
             const img = document.createElement('img');
-            img.src = src;
             img.className = 'feed-image';
             img.loading = 'lazy';
             img.decoding = 'async';
 
-            // If an image number doesn't exist yet, remove it from the pool and pull another
+            let triedGif = item.ext === '.gif';
+            img.src = item.ext ? `${item.base}${item.ext}` : `${item.base}.jpg`;
+
+            // Cache whichever format succeeded (.jpg or .gif) for future scroll cycles
+            img.onload = () => {
+                if (!item.ext) {
+                    item.ext = triedGif ? '.gif' : '.jpg';
+                }
+            };
+
+            // If .jpg isn't found, automatically check for .gif; if neither exists, drop the slot
             img.onerror = () => {
+                if (!triedGif) {
+                    triedGif = true;
+                    img.src = `${item.base}.gif`;
+                    return;
+                }
+
                 img.remove();
-                masterImages = masterImages.filter(item => item !== src);
-                shuffledQueue = shuffledQueue.filter(item => item !== src);
-                if (masterImages.length > 0) {
+                masterItems = masterItems.filter(entry => entry.base !== item.base);
+                shuffledQueue = shuffledQueue.filter(entry => entry.base !== item.base);
+                if (masterItems.length > 0) {
                     appendSingleImage();
                 }
             };
 
-            // Open clicked image in fullscreen within the same window
+            // Open clicked image (whether .jpg or .gif) in fullscreen within the same window
             img.addEventListener('click', () => {
-                openLightbox(src);
+                openLightbox(img.currentSrc || img.src);
             });
 
             feed.appendChild(img);
